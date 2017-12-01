@@ -1,14 +1,15 @@
-const webpack = require('webpack');
-const path = require('path');
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack')
+const path = require('path')
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const WorkboxPlugin = require('workbox-webpack-plugin')
 
 module.exports = {
   entry: path.resolve(__dirname, 'src/main.js'),
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.js',
+    filename: 'bundle.[hash].js'
   },
   resolve: {
     extensions: ['.js', '.vue', '.json'],
@@ -42,7 +43,7 @@ module.exports = {
       },
       {
         test: /\.js$/,
-        include: ['src'],
+        exclude: /node_modules/,
         use: {
           loader: 'babel-loader'
         }
@@ -63,25 +64,29 @@ module.exports = {
     ]
   },
   plugins: [
-    new ExtractTextPlugin('style.css'),
+    new ExtractTextPlugin('style.[hash].css'),
     new HtmlWebpackPlugin({
       template: 'src/index.html'
     }),
     new webpack.EnvironmentPlugin({
-      NODE_ENV: 'development', // use 'development' unless process.env.NODE_ENV is defined
+      NODE_ENV: 'development' // use 'development' unless process.env.NODE_ENV is defined
     }),
     new CopyWebpackPlugin([
       {
         from: 'static',
         to: 'static'
-      },
-      {
-        from: 'src/sw.js',
-      },
-    ])
+      }
+    ]),
+    new WorkboxPlugin({
+      globDirectory: 'dist',
+      globPatterns: ['**/*.{html,css,js}', 'static/manifest.json'],
+      swDest: path.join('dist', 'sw.js'),
+      clientsClaim: true,
+      skipWaiting: true
+    })
   ],
   devServer: {
     compress: true,
     port: 9000
   }
-};
+}
